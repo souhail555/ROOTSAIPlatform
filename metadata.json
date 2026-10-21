@@ -1,0 +1,8 @@
+{
+  "name": "Remix نشر فوري | Multi-Publish Hub",
+  "description": "منصة نشر موحدة لنشر منشوراتك بضغطة زر واحدة تلقائياً على فيسبوك وانستقرام وتيك توك وتويتر مع معاينات تفاعلية وتخصيص ذكي.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
