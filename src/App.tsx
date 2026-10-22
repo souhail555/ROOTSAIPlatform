@@ -198,6 +198,7 @@ export default function App() {
 
   // Scheduling State
   const [publishMode, setPublishMode] = useState<'immediate' | 'schedule'>('immediate');
+  const [repeatMode, setRepeatMode] = useState<'none' | 'daily' | 'weekly'>('none');
   const [scheduledDateTime, setScheduledDateTime] = useState<string>(() => {
     // Default to tomorrow at 10:00 AM
     const d = new Date();
@@ -214,7 +215,7 @@ export default function App() {
   const [accountsModalOpen, setAccountsModalOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'history'>('editor');
-  
+
   // History list with sample data
   const [history, setHistory] = useState<PublishHistoryRecord[]>([
     {
@@ -545,6 +546,7 @@ export default function App() {
           customizedTexts: finalCustomized,
           mediaUrl,
           scheduledFor: scheduledDateObj.toISOString(),
+          repeatMode,
           webhookUrl,
           accountsConfig: platforms,
           twitterMode: twitterPublishMode,

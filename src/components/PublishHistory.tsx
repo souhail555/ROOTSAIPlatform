@@ -152,6 +152,33 @@ export const PublishHistory: React.FC<PublishHistoryProps> = ({
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+      {/* Analytics Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40">
+        {(() => {
+          const totalPublished = history.filter((h) => !h.isScheduled || h.status === 'published');
+          const totalTargets = totalPublished.reduce((acc, h) => acc + (h.targetPlatforms?.length || h.results.length || 0), 0);
+          const perPlatform: Record<string, number> = {};
+          totalPublished.forEach((h) =>
+            (h.targetPlatforms?.length ? h.targetPlatforms : h.results.map((r) => r.platformId)).forEach((pid) => {
+              perPlatform[pid] = (perPlatform[pid] || 0) + 1;
+            })
+          );
+          const stats = [
+            { label: isArabic ? 'منشورات' : 'Posts', value: totalPublished.length, cls: 'text-indigo-600' },
+            { label: isArabic ? 'إجمالي النشر' : 'Total Publishes', value: totalTargets, cls: 'text-emerald-600' },
+            { label: isArabic ? 'مجدولة' : 'Scheduled', value: scheduledCount, cls: 'text-amber-600' },
+            { label: isArabic ? 'المنصة الأكثر' : 'Top Platform', value: perPlatform[Object.keys(perPlatform).sort((a, b) => perPlatform[b] - perPlatform[a])[0]] || 0, sub: Object.keys(perPlatform).sort((a, b) => perPlatform[b] - perPlatform[a])[0], cls: 'text-slate-800' },
+          ];
+          return stats.map((s) => (
+            <div key={s.label} className="flex flex-col items-center text-center px-2 py-1.5 rounded-lg bg-white/70 border border-slate-100">
+              <span className={`text-base font-extrabold tabular-nums ${s.cls}`}>
+                {s.value}{s.sub ? <span className="text-[10px] font-bold ml-1 text-slate-500">({s.sub})</span> : null}
+              </span>
+              <span className="text-[10px] font-medium text-slate-500 mt-0.5">{s.label}</span>
+            </div>
+          ));
+        })()}
+      </div>
       {/* Header and Filter Controls */}
       <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -195,10 +222,39 @@ export const PublishHistory: React.FC<PublishHistoryProps> = ({
           >
             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
             <span>{isArabic ? 'المنشورة' : 'Published'}</span>
-            <span className="font-mono tabular-nums">({publishedCount})</span>
-          </button>
-        </div>
-      </div>
+                  <span className="font-mono tabular-nums">({publishedCount})</span>
+                </button>
+              </div>
+
+              {/* Export / Import controls */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+                  title={isArabic ? 'تصدير السجل إلى ملف JSON' : 'Export history to JSON'}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isArabic ? 'تصدير' : 'Export'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+                  title={isArabic ? 'استيراد السجل من ملف JSON' : 'Import history from JSON'}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isArabic ? 'استيراد' : 'Import'}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportFile}
+                  className="hidden"
+                />
+              </div>
+            </div>
 
       {/* List */}
       <div className="divide-y divide-slate-100">
