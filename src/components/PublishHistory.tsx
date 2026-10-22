@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { PublishHistoryRecord, PlatformId, PlatformConfig } from '../types';
+import React, { useState, useRef } from 'react';
+  import { PublishHistoryRecord, PlatformId, PlatformConfig } from '../types';
 import { PlatformBadgeIcon } from './SocialIcons';
 import {
   Clock,
@@ -14,9 +14,11 @@ import {
   ChevronDown,
   BookOpen,
   Eye,
-  X,
-  Copy,
-} from 'lucide-react';
+    X,
+    Copy,
+    Download,
+    Upload,
+  } from 'lucide-react';
 
 interface PublishHistoryProps {
   history: PublishHistoryRecord[];
@@ -24,6 +26,7 @@ interface PublishHistoryProps {
   onReusePost: (text: string, mediaUrl: string | null) => void;
   onPublishScheduledNow?: (id: string) => void;
   onCancelScheduled?: (id: string) => void;
+  onImportData?: (records: PublishHistoryRecord[]) => void;
   lang: 'ar' | 'en';
 }
 
@@ -31,14 +34,16 @@ export const PublishHistory: React.FC<PublishHistoryProps> = ({
   history,
   platformsConfig,
   onReusePost,
-  onPublishScheduledNow,
-  onCancelScheduled,
-  lang,
-}) => {
+    onPublishScheduledNow,
+    onCancelScheduled,
+    onImportData,
+    lang,
+  }) => {
   const isArabic = lang === 'ar';
   const [filter, setFilter] = useState<'all' | 'published' | 'scheduled'>('all');
   const [viewingArticle, setViewingArticle] = useState<PublishHistoryRecord | null>(null);
   const [copiedNotice, setCopiedNotice] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getWords = (text: string) => (text && text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0);
 
@@ -49,6 +54,43 @@ export const PublishHistory: React.FC<PublishHistoryProps> = ({
   };
 
   const scheduledCount = history.filter((h) => h.isScheduled && h.status === 'scheduled').length;
+
+  // Export all history + scheduled queue to a JSON file
+  const handleExport = () => {
+    const exportData = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      history,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `roots-ai-history-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import history from a previously exported JSON file
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onImportData) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        if (Array.isArray(data.history) && data.history.length > 0) {
+          onImportData(data.history as PublishHistoryRecord[]);
+        } else {
+          alert(isArabic ? 'الملف لا يحتوي على سجل صالح' : 'File contains no valid history');
+        }
+      } catch {
+        alert(isArabic ? 'فشل قراءة الملف — تأكد أنه JSON صالح' : 'Failed to read file — invalid JSON');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
   const publishedCount = history.filter((h) => !h.isScheduled || h.status === 'published').length;
 
   const filteredHistory = history.filter((item) => {
